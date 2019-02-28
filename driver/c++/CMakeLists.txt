@@ -23,34 +23,19 @@ set_source_files_properties(../../base/qlibc/md5.c PROPERTIES LANGUAGE CXX )
 set_source_files_properties(../../base/qlibc/qhash.c PROPERTIES LANGUAGE CXX )
 set_source_files_properties(../../base/qlibc/qhasharr.c PROPERTIES LANGUAGE CXX )
 
-file(GLOB ZK_OBJ_FILE
-        "${PROJECT_SOURCE_DIR}/../../deps/zookeeper/_install/lib/*.o"
-    )
-message(${ZK_OBJ_FILE})
-
 add_definitions(${DRIVER_COMPILE_FLAGS})
-add_library(qconf_static STATIC ${DIR_SRCS}
-    ${ZK_OBJ_FILE})
 
-add_library(qconf SHARED ${DIR_SRCS})
+add_library(qconf STATIC ${DIR_SRCS})
 
 # link libpthread
 find_package (Threads)
 target_link_libraries (qconf ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries (qconf_static ${CMAKE_THREAD_LIBS_INIT})
 
 # link static libzookeeper_mt
-target_link_libraries(qconf
-    ${PROJECT_SOURCE_DIR}/../../deps/zookeeper/_install/lib/libzookeeper_mt.a)
+target_link_libraries(qconf zookeeper_mt)
+install(TARGETS qconf 
+        ARCHIVE DESTINATION 
+        ${CMAKE_INSTALL_PREFIX}/lib)
 
-set_target_properties(qconf_static PROPERTIES OUTPUT_NAME qconf)
-install(TARGETS qconf_static ARCHIVE DESTINATION lib)
-install(TARGETS qconf LIBRARY DESTINATION lib)
-install(DIRECTORY include DESTINATION .)
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    install(CODE "EXECUTE_PROCESS (COMMAND ln -sf
-    ${CMAKE_INSTALL_PREFIX}/lib/libqconf.so /usr/local/lib/libqconf.so)")
-    install(CODE "EXECUTE_PROCESS (COMMAND ln -sf
-    ${CMAKE_INSTALL_PREFIX}/lib/libqconf.a /usr/local/lib/libqconf.a)")
-    install(DIRECTORY include/ DESTINATION /usr/local/include/qconf FILES_MATCHING PATTERN "*.h")
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+file(GLOB QCONF_HEADERS "include/*.h")
+install(FILES ${QCONF_HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/qconf/)
